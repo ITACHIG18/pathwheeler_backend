@@ -449,31 +449,40 @@ def home():
     })
 
 
+
 @app.route("/api/health", methods=["GET"])
-def health():
+def health_check():
+    conn = None
+    cursor = None
+
     try:
         conn = get_db()
+        cursor = conn.cursor()
 
-        if conn.is_connected():
-            conn.close()
+        cursor.execute("SELECT 1")
+        cursor.fetchone()
 
-            return jsonify({
-                "success": True,
-                "message": "Backend and database are connected.",
-                "database": DB_NAME
-            })
-
-        return json_error(
-            "Database connection failed.",
-            500
-        )
+        return jsonify({
+            "success": True,
+            "message": "Backend and database are working.",
+            "database": DB_NAME
+        }), 200
 
     except Exception as error:
+        print("HEALTH CHECK ERROR:", str(error))
+
         return jsonify({
             "success": False,
             "message": "Database connection failed.",
             "error": str(error)
         }), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+
+        if conn:
+            conn.close()
 
 
 # ============================================================
